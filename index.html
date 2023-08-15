@@ -36,7 +36,7 @@
             .appHeaderContainer           { position: relative; width: 100%; min-height: 70vh; color: #FEFDFB; display: flex; flex-direction: column; justify-content: center; align-items: center; background-image: url(images/background.png); background-size: cover; background-repeat: no-repeat; background-attachment: fixed; background-position-x: center; }
 
 
-            .appBodyContainer             { width: 100%; min-height: 100vh; background-color: #FEFDFB; color: #2868C8; display: flex; flex-direction: column; }
+            .appBodyContainer             { width: 100%; min-height: calc(100vh + 150px); background-color: #FEFDFB; color: #2868C8; display: flex; flex-direction: column; }
 
 
             .appBodyNavContainer          { height: 100px; display: flex; align-items: center; justify-content: center; }
@@ -83,7 +83,7 @@
                         <h1 style="font-size: 50px;">Limitless TCP</h1>
                         <p style="margin: 0; font-weight: bold;">Wrapper library for the net module providing limitless potential.</p>
 
-<!--                        <div class="scrollDownContainer">-->
+<!--                        <div class="scrollDownContainer" id="scrollDown">-->
 <!--                            <a class="scrollDown" href="#appBody"><span></span><p>Scroll</p></a>-->
 <!--                        </div>-->
                     </div>
@@ -114,12 +114,13 @@
                                         <v-tab :value="3">Java</v-tab>
                                         <v-tab :value="4">C#</v-tab>
                                         <v-tab :value="5">C</v-tab>
+                                        <v-tab :value="6">Developer Documentation</v-tab>
                                     </v-tabs>
                                 </div>
                                 <v-window v-model="languageTab">
                                     <v-window-item :key="1" :value="1">
                                         <div class="appBodyReadmeWrapper">
-                                            <div class="markdown-body" id="codePage-1" v-html="getMarkdownContent(1)"></div>
+                                            <div class="markdown-body" id="codePage-1"></div>
                                         </div>
                                     </v-window-item>
 
@@ -137,6 +138,13 @@
 
                                     <v-window-item :key="5" :value="5">
                                         <h1 style="text-align: center">Coming Soon...</h1>
+                                    </v-window-item>
+
+
+                                    <v-window-item :key="6" :value="6">
+                                        <div class="appBodyReadmeWrapper">
+                                            <div class="markdown-body" id="codePage-6"></div>
+                                        </div>
                                     </v-window-item>
                                 </v-window>
                             </v-window-item>
@@ -163,15 +171,30 @@
         let app = Vue.createApp({
             data() {
                 return {
-                    tab: null,
+                    tab: 1,
                     languageTab: null
                 }
             },
 
-            methods: {
-                getMarkdownContent: function(page) {
-                    switch (page) {
+            watch: {
+                languageTab(newTab, oldTab) {
+                    let urlParams = new URLSearchParams(window.location.search);
+
+                    urlParams.set("language", newTab);
+
+                    let newQueryString = urlParams.toString();
+
+                    // Create the new URL with the modified query string
+                    let newURL = window.location.origin + window.location.pathname + "?" + newQueryString;
+
+                    history.pushState(null, "", newURL);
+
+                    if (document.getElementById("codePage-" + oldTab) !== null) {
+                        document.getElementById("codePage-" + oldTab).innerHTML = ''
+                    }
+                    switch (newTab) {
                         case 1:
+
                             fetch("docs/JavaScript.md", {
                                 mode: 'no-cors',
                                 method: 'get'
@@ -180,7 +203,7 @@
                             }).then(function (markdown) {
                                 document.getElementById("codePage-1").innerHTML = converter.makeHtml(markdown);
                                 hljs.highlightAll();
-                            })
+                            });
                             break;
 
                         case 2:
@@ -188,24 +211,53 @@
                         case 4:
                         case 5:
                             break;
+
+                        case 6:
+                            fetch("docs/DevDocs.md", {
+                                mode: 'no-cors',
+                                method: 'get'
+                            }).then(function (response) {
+                                return response.text();
+                            }).then(function (markdown) {
+                                document.getElementById("codePage-6").innerHTML = converter.makeHtml(markdown);
+                                hljs.highlightAll();
+                            });
+                            break;
                     }
+                },
+
+                tab(newTab, oldTab) {
+                    let urlParams = new URLSearchParams(window.location.search);
+
+                    urlParams.set("tab", newTab);
+
+                    let newQueryString = urlParams.toString();
+
+                    // Create the new URL with the modified query string
+                    let newURL = window.location.origin + window.location.pathname + "?" + newQueryString;
+
+                    history.pushState(null, "", newURL);
                 }
             }
         });
-
-        // setInterval(() => {
-        //     hljs.highlightAll();
-        // }, 100)
 
         const vuetify = Vuetify.createVuetify();
 
         app.use(vuetify).mount('#vueApp');
 
-        // $(function() {
-        //     $('a[href*=#]').on('click', function(e) {
-        //         e.preventDefault();
-        //         $('html, body').animate({ scrollTop: $($(this).attr('href')).offset().top}, 500, 'linear');
-        //     });
+        let urlParams = new URLSearchParams(window.location.search);
+
+        if (urlParams.get('tab') !== null) {
+            app._instance.data.tab = Number(urlParams.get('tab'));
+        }
+
+        if (urlParams.get('language') !== null) {
+            app._instance.data.languageTab = Number(urlParams.get('language'));
+        }
+
+        // document.getElementById('scrollDown').addEventListener('click', function(e) {
+        //     e.preventDefault();
+        //     $('html, body').animate({ scrollTop: $($(this).attr('href')).offset().top}, 500, 'linear');
         // });
     </script>
 </html>
